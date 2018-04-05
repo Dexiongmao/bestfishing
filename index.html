@@ -22,6 +22,8 @@ var map=new google.maps.Map(document.getElementById("googleMap"),mapProp);
 }
 </script>
 
+map.data.loadGeoJson('LakeJSON.json');  
+  
 <script async defer
 src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBGLc9_Sa8DBtcnOagh24sIepOnjmDrLjo&callback=myMap">
 </script>
