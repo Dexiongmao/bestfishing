@@ -9,7 +9,28 @@
 <body>
 <h1>Search the best fishing water</h1>
 
+<script>
+var coordinates;
+function showMap() {
+    var script = document.createElement("script");
+    script.src = "LakeJSON.json";
+    document.getElementsByTagName("head")[0].appendChild(script);
+}
 
+window.geojson_callback = function(results) {
+    console.log(results.geometry.coordinates);
+    coordinates = results.geometry.coordinates;
+    var centerCoord = new google.maps.LatLng(coordinates[0], coordinates[1]);
+    var mapCanvas = document.getElementById("gmap");
+    var mapOptions = {center: centerCoord, zoom: 8};
+    var map = new google.maps.Map(mapCanvas, mapOptions);
+    var marker = new google.maps.Marker({position:centerCoord});
+    marker.setMap(map);
+}
+        </script>
+  
+  
+  
 <div id="googleMap" style="width:100%;height:400px;"></div>
 
 <script>
@@ -22,7 +43,6 @@ var map=new google.maps.Map(document.getElementById("googleMap"),mapProp);
 }
 </script>
 
-map.data.loadGeoJson('LakeJSON.json');  
   
 <script async defer
 src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBGLc9_Sa8DBtcnOagh24sIepOnjmDrLjo&callback=myMap">
