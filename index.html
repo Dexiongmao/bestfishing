@@ -7,8 +7,10 @@
       /* Always set the map height explicitly to define the size of the div
        * element that contains the map. */
       #map {
-        height: 100%;
+        width: 100%;
+        height: 600px;
       }
+
       /* Optional: Makes the sample page fill the window. */
       html, body {
         height: 100%;
@@ -20,12 +22,14 @@
 
 <body>
 <div id="map"></div>
+<input type="button" value="Spec_Reg">值有Y和N
     <script>
       var map;
-      function initMap() {
+
+      function initMap () {
         map = new google.maps.Map(document.getElementById('map'), {
           zoom: 7,
-          center: new google.maps.LatLng(41.2033,-77.1945),
+          center: new google.maps.LatLng(41.2033, -77.1945),
           mapTypeId: 'terrain'
         });
 
@@ -35,24 +39,41 @@
         // http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.geojsonp
         //script.src = 'https://developers.google.com/maps/documentation/javascript/examples/json/earthquake_GeoJSONP.js';
         script.src = './LakeGeoJSON.js';
-		document.getElementsByTagName('head')[0].appendChild(script);
+        document.getElementsByTagName('head')[0].appendChild(script);
       }
 
       // Loop through the results array and place a marker for each
       // set of coordinates.
-      window.eqfeed_callback = function(results) {
+      window.eqfeed_callback = function (results) {
+        var res2 = Object.assign({}, results)
+
+        res2 = results.features.filter((x) => {
+
+        })
+
         for (var i = 0; i < results.features.length; i++) {
-          var coords = results.features[i].geometry.coordinates;
-          var latLng = new google.maps.LatLng(coords[1],coords[0]);
+          // r-1----------------------------去掉这一行
+          // var coords = results.features[i].geometry.coordinates;
+
+          // r-2---------------------------- 添加这一段
+          var coords = []
+          if (results.features[i].properties.Spec_Reg === 'Y') {
+            coords = results.features[i].geometry.coordinates
+          }
+          console.log(coords)
+          // r-2----------------------------
+
+          var latLng = new google.maps.LatLng(coords[1], coords[0]);
           var marker = new google.maps.Marker({
             position: latLng,
             map: map
           });
         }
       }
+
     </script>
     <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBGLc9_Sa8DBtcnOagh24sIepOnjmDrLjo&callback=initMap">
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBGLc9_Sa8DBtcnOagh24sIepOnjmDrLjo&callback=initMap">
     </script>
 
 </body>
