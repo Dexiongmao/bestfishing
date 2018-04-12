@@ -33,7 +33,7 @@
           mapTypeId: 'terrain'
         });
         infoWindow = new google.maps.InfoWindow;
-
+        
         // Create a <script> tag and set the USGS URL as the source.
         var script = document.createElement('script');
         // This example uses a local copy of the GeoJSON stored at
@@ -41,35 +41,6 @@
         //script.src = 'https://developers.google.com/maps/documentation/javascript/examples/json/earthquake_GeoJSONP.js';
         script.src = './LakeGeoJSON.js';
         document.getElementsByTagName('head')[0].appendChild(script);
-      }
-
-      // Loop through the results array and place a marker for each
-      // set of coordinates.
-      window.eqfeed_callback = function (results) {
-        var res2 = Object.assign({}, results)
-
-        res2 = results.features.filter((x) => {
-
-        })
-
-        for (var i = 0; i < results.features.length; i++) {
-          // r-1----------------------------去掉这一行
-          // var coords = results.features[i].geometry.coordinates;
-
-          // r-2---------------------------- 添加这一段
-          var coords = []
-          if (results.features[i].properties.Spec_Reg === 'Y') {
-            coords = results.features[i].geometry.coordinates
-          }
-          console.log(coords)
-          // r-2----------------------------
-
-          var latLng = new google.maps.LatLng(coords[1], coords[0]);
-          var marker = new google.maps.Marker({
-            position: latLng,
-            map: map
-          });
-        }
       }
       if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(function(position) {
@@ -98,6 +69,35 @@
                               'Error: Your browser doesn\'t support geolocation.');
         infoWindow.open(map);
       }
+      // Loop through the results array and place a marker for each
+      // set of coordinates.
+      window.eqfeed_callback = function (results) {
+        var res2 = Object.assign({}, results)
+
+        res2 = results.features.filter((x) => {
+
+        })
+
+        for (var i = 0; i < results.features.length; i++) {
+          // r-1----------------------------去掉这一行
+          // var coords = results.features[i].geometry.coordinates;
+
+          // r-2---------------------------- 添加这一段
+          var coords = []
+          if (results.features[i].properties.Spec_Reg === 'Y') {
+            coords = results.features[i].geometry.coordinates
+          }
+          console.log(coords)
+          // r-2----------------------------
+
+          var latLng = new google.maps.LatLng(coords[1], coords[0]);
+          var marker = new google.maps.Marker({
+            position: latLng,
+            map: map
+          });
+        }
+      }
+      
 
     </script>
     <script async defer
