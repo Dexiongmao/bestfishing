@@ -1,30 +1,39 @@
 <!DOCTYPE html>
 <html>
-
 <head>
+  <meta charset="UTF-8">
   <title>BestFishing</title>
-  <style>
-      /* Always set the map height explicitly to define the size of the div
-       * element that contains the map. */
-      #map {
-        width: 100%;
-        height: 600px;
-      }
+  <link type="text/css" rel="stylesheet" href="./css/bootstrap.min.css"></link>
+  <script src="js/jquery3.31.js"></script>
 
-      /* Optional: Makes the sample page fill the window. */
-      html, body {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-      }
+  <style>
+    /*初始化*/
+    html, body {height: 100%;margin: 0;padding: 0;}
+
+    .main {display: flex;}
+
+    #map {flex: 0 0 350px;height: 600px;}
+
+    .choice-group {flex: 1;}
+
+    ul {background: springgreen}
   </style>
 </head>
 
 <body>
-<div id="map"></div>
+<div class="main">
+  <div id="map"></div>
+  <div class="choice-group">
+    <ul class="checkbox">
+      <li class="checkbox"><label for="choice1"><input type="checkbox" id="choice1">第一种类型</label></li>
+      <li class="checkbox"><label for="choice2"><input type="checkbox" id="choice2">第一种类型</label></li>
+    </ul>
+  </div>
+</div>
 <input type="button" value="Spec_Reg">值有Y和N
     <script>
-      var map;
+      var map
+      var geoData
 
       function initMap () {
         map = new google.maps.Map(document.getElementById('map'), {
@@ -33,44 +42,62 @@
           mapTypeId: 'terrain'
         });
 
-        // Create a <script> tag and set the USGS URL as the source.
-        var script = document.createElement('script');
-        // This example uses a local copy of the GeoJSON stored at
-        // http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.geojsonp
-        //script.src = 'https://developers.google.com/maps/documentation/javascript/examples/json/earthquake_GeoJSONP.js';
-        script.src = './LakeGeoJSON.js';
-        document.getElementsByTagName('head')[0].appendChild(script);
-      }
+        $.ajax({
+          url: './data/LakesEditedv2.json',
+          success: (data) => {
+            var geoData = data
+            var 要找的鱼 = 'Rainbow'
 
-      // Loop through the results array and place a marker for each
-      // set of coordinates.
-      window.eqfeed_callback = function (results) {
-        var res2 = Object.assign({}, results)
+            map.data.addGeoJson(geoData)
 
-        res2 = results.features.filter((x) => {
+            for (var i = 0; i < data.features.length; i++) {
+              var coords = []
+              debugger
+              console.log(data.features[i])
+              console.log(data.features[i].properties)
+              console.log(data.features[i].properties[''])
+              if (data.features[i].properties[要找的鱼] === 'Yes') {
+                debugger
+                coords = data.features[i].geometry.coordinates
+              }
+            }
 
-        })
+            var latLng = new google.maps.LatLng(coords[1], coords[0])
+            var marker = new google.maps.Marker({
+              position: latLng,
+              map: map
+            })
 
-        for (var i = 0; i < results.features.length; i++) {
-          // r-1----------------------------去掉这一行
-          // var coords = results.features[i].geometry.coordinates;
-
-          // r-2---------------------------- 添加这一段
-          var coords = []
-          if (results.features[i].properties.Spec_Reg === 'Y') {
-            coords = results.features[i].geometry.coordinates
           }
-          console.log(coords)
-          // r-2----------------------------
-
-          var latLng = new google.maps.LatLng(coords[1], coords[0]);
-          var marker = new google.maps.Marker({
-            position: latLng,
-            map: map
-          });
-        }
+        })
       }
 
+      /*
+       * data 操作 数据操作
+       */
+      // map.data.loadGeoJson()
+      // map.data.addGeoJson(geoData)
+      /*
+       * marker 操作 标记操作
+       * https://developers.google.com/maps/documentation/javascript/examples/marker-remove?hl=zh-cn
+       */
+      // marker.setMap(null);
+
+      // window.eqfeed_callback = function (results) {
+      //   for (var i = 0; i < results.features.length; i++) {
+      //     var coords = []
+      //     if (results.features[i].properties.Spec_Reg === 'Y') {
+      //       coords = results.features[i].geometry.coordinates
+      //     }
+      //
+      //     var latLng = new google.maps.LatLng(coords[1], coords[0])
+      //     var marker = new google.maps.Marker({
+      //       position: latLng,
+      //       map: map
+      //     })
+      //   }
+      //   // 这里写修改数据
+      // }
     </script>
     <script async defer
             src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBGLc9_Sa8DBtcnOagh24sIepOnjmDrLjo&callback=initMap">
