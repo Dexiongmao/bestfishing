@@ -3,32 +3,48 @@
 <head>
   <meta charset="UTF-8">
   <title>BestFishing</title>
-  <link type="text/css" rel="stylesheet" href="./css/bootstrap.min.css"></link>
+  <!--<link type="text/css" rel="stylesheet" href="./css/bootstrap.min.css"></link>-->
   <script src="js/jquery3.31.js"></script>
+
+  <!--<link rel="stylesheet" type="text/css" href="semantic/dist/semantic.min.css">-->
+  <!--<link rel="stylesheet" type="text/css" href="Semantic-UI/semantic.min.css">-->
+  <!--<script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>-->
+  <!--<script src="Semantic-UI/semantic.js"></script>-->
+
 
   <style>
     /*初始化*/
+    * {padding: 0; margin: 0;font-size: 14px;}
+
     html, body {height: 100%;margin: 0;padding: 0;}
+
+    ul, li {list-style-type: none;}
 
     .main {display: flex;}
 
     #map {flex: 0 0 350px;height: 600px;}
 
-    .choice-group {flex: 1;}
+    ul.checkbox {flex: 1; height: 600px;padding-left: 10px;overflow: auto;background: springgreen;}
 
-    ul {background: springgreen}
+    ul.checkbox li {display: flex;align-items: center;}
+
+    ul.checkbox li:hover {background: rgba(0, 0, 0, 0.2);}
+
+    ul.checkbox li label {flex: 1;padding: 5px 0 5px 15px;cursor: pointer;}
+
+    ul.checkbox li input[type=checkbox] {margin: 0;margin-left: 5px;}
   </style>
 </head>
 
 <body>
 <div class="main">
   <div id="map"></div>
-  <div class="choice-group">
-    <ul class="checkbox">
-      <li class="checkbox"><label for="choice1"><input type="checkbox" id="choice1">第一种类型</label></li>
-      <li class="checkbox"><label for="choice2"><input type="checkbox" id="choice2">第一种类型</label></li>
-    </ul>
-  </div>
+  <ul class="checkbox" id="checkbox">
+    <li>
+      <input type="checkbox" id="choice">
+      <label for="choice">第一种类型</label>
+    </li>
+  </ul>
 </div>
 <input type="button" value="Spec_Reg">值有Y和N
     <script>
@@ -45,29 +61,44 @@
         $.ajax({
           url: './data/LakesEditedv2.json',
           success: (data) => {
-            var geoData = data
+            geoData = data
             var 要找的鱼 = 'Rainbow'
+            var checkItems = data.features[0].properties
+            var innerHTML = ''
+            var number = 0
 
-            map.data.addGeoJson(geoData)
+            // 渲染dom
+            for (var i in checkItems) {
+              number++
+              innerHTML +=
+                `<li>
+                  <input type="checkbox" id="choice${number}">
+                  <label for="choice${number}">${i}</label>
+                </li>`
+            }
+
+            $('#checkbox').append(innerHTML)
+            $('#checkbox label').off('click').on('click', function (e) {
+              console.log($(this).text())
+            })
 
             for (var i = 0; i < data.features.length; i++) {
               var coords = []
-              debugger
-              console.log(data.features[i])
-              console.log(data.features[i].properties)
-              console.log(data.features[i].properties[''])
-              if (data.features[i].properties[要找的鱼] === 'Yes') {
-                debugger
+              let hasFishStr = data.features[i].properties[要找的鱼] ? data.features[i].properties[要找的鱼] : ''
+
+              if (hasFishStr.indexOf('Yes') === 0) {
                 coords = data.features[i].geometry.coordinates
+              } else {
+                coords = []
               }
+
+              var latLng = new google.maps.LatLng(coords[1], coords[0])
+              var marker = new google.maps.Marker({
+                position: latLng,
+                map: map
+              })
+
             }
-
-            var latLng = new google.maps.LatLng(coords[1], coords[0])
-            var marker = new google.maps.Marker({
-              position: latLng,
-              map: map
-            })
-
           }
         })
       }
@@ -76,28 +107,12 @@
        * data 操作 数据操作
        */
       // map.data.loadGeoJson()
-      // map.data.addGeoJson(geoData)
+      // map.data.addGeoJson(geoData)     // 自动产生marker
       /*
        * marker 操作 标记操作
        * https://developers.google.com/maps/documentation/javascript/examples/marker-remove?hl=zh-cn
        */
       // marker.setMap(null);
-
-      // window.eqfeed_callback = function (results) {
-      //   for (var i = 0; i < results.features.length; i++) {
-      //     var coords = []
-      //     if (results.features[i].properties.Spec_Reg === 'Y') {
-      //       coords = results.features[i].geometry.coordinates
-      //     }
-      //
-      //     var latLng = new google.maps.LatLng(coords[1], coords[0])
-      //     var marker = new google.maps.Marker({
-      //       position: latLng,
-      //       map: map
-      //     })
-      //   }
-      //   // 这里写修改数据
-      // }
     </script>
     <script async defer
             src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBGLc9_Sa8DBtcnOagh24sIepOnjmDrLjo&callback=initMap">
