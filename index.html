@@ -1,165 +1,288 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>BestFishing</title>
-  <!--<link type="text/css" rel="stylesheet" href="./css/bootstrap.min.css"></link>-->
-  <script src="js/jquery3.31.js"></script>
+    <meta charset="UTF-8">
+    <title>BestFishing</title>
+    <script src="js/jquery3.31.js"></script>
+    <script src="js/lodash.js"></script>
 
-  <!--<link rel="stylesheet" type="text/css" href="semantic/dist/semantic.min.css">-->
-  <!--<link rel="stylesheet" type="text/css" href="Semantic-UI/semantic.min.css">-->
-  <!--<script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>-->
-  <!--<script src="Semantic-UI/semantic.js"></script>-->
+    <style>
+        /*初始化*/
+        * {padding: 0; margin: 0;font-size: 17px;}
 
+        html, body {height: 100%;margin: 0;padding: 0;}
 
-  <style>
-    /*初始化*/
-    * {padding: 0; margin: 0;font-size: 14px;}
+        ul, li {list-style-type: none;}
 
-    html, body {height: 100%;margin: 0;padding: 0;}
+        .main {display: flex;height: 100%;}
 
-    ul, li {list-style-type: none;}
+        .map-wrapper {display: flex; flex: 1;height: 100%;flex-flow: column nowrap;overflow: hidden;}
 
-    .main {display: flex;}
+        .map-wrapper #map {flex: 1;}
 
-    #map {flex: 0 0 350px;height: 600px;}
+        .map-wrapper .choiced-explanation {margin-left: 20px;display: flex; flex: 0 0 50px;align-items: center;overflow: auto;}
 
-    ul.checkbox {flex: 1; height: 600px;padding-left: 10px;overflow: auto;background: springgreen;}
+        .choiced-explanation label {flex: 0 0 140px;}
 
-    ul.checkbox li {display: flex;position: relative;align-items: center;}
+        .choiced-item {display: flex;}
 
-    ul.checkbox li:hover {background: rgba(0, 0, 0, 0.2);}
+        .choiced-explanation .choiced-item span {padding: 5px 10px 5px 10px;margin: 0 0 0 10px;background: khaki;border-radius: 5px;}
 
-    ul.checkbox li label {flex: 1;padding: 5px 0 5px 25px;cursor: pointer;}
+        ul.checkbox {flex: 0 0 240px;padding-left: 12px;overflow: auto;background: DIMGRAY;color: GAINSBORO;}
 
-    ul.checkbox li input[type=checkbox] {position: absolute;margin: 0;margin-left: 5px;}
-  </style>
+        ul.checkbox li {display: flex;position: relative;align-items: center;}
+
+        ul.checkbox li:hover {background: rgba(0, 0, 0, 0.2);}
+
+        ul.checkbox li label {flex: 1;padding: 5px 0 5px 25px;cursor: pointer;}
+
+        ul.checkbox li input[type=checkbox] {position: absolute;margin: 0;margin-left: 5px;}
+
+        ::-webkit-scrollbar-thumb {background-color: rgba(0, 0, 0, 0.2); height: 50px; outline-offset: -2px; outline: 2px solid #fff; -webkit-border-radius: 4px;border: 2px solid #fff;}
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+
+        ::-webkit-scrollbar-track-piece { background-color: #fff; -webkit-border-radius: 0; }
+    </style>
 </head>
 
 <body>
 <div class="main">
-  <div id="map"></div>
-  <ul class="checkbox" id="checkbox"></ul>
+    <div class="map-wrapper">
+        <div id="map"></div>
+        <div class="choiced-explanation">
+            <label class="label">your choice is :</label>
+            <div class="choiced-item">
+                <span>aaa</span>
+            </div>
+        </div>
+    </div>
+    <ul class="checkbox" id="checkbox"></ul>
 </div>
-<input type="button" value="Spec_Reg">值有Y和N
-    <script>
-      var map
-      var geoData
 
-      function initMap () {
-        map = new google.maps.Map(document.getElementById('map'), {
-          zoom: 7,
-          center: new google.maps.LatLng(41.2033, -77.1945),
-          mapTypeId: 'terrain'
+
+<script>
+    var map
+    var geoData
+
+    function initMap () {
+      map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 7,
+        center: new google.maps.LatLng(41.2033, -77.1945),
+        mapTypeId: 'terrain'
+      });
+
+      var infoWindow = new google.maps.InfoWindow({map: map});                    // r_消息提示框
+
+      // Locate current position                                                    // 显示本地位置
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function (position) {
+          var pos = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+
+          infoWindow.setPosition(pos);
+          infoWindow.setContent('Your current position');
+          map.setCenter(pos);
+        }, function () {
+          handleLocationError(true, infoWindow, map.getCenter());
         });
+      } else {
+        // Browser doesn't support Geolocation
+        handleLocationError(false, infoWindow, map.getCenter());
+      }
 
-        $.ajax({
-          url: './data/LakesEditedv2.json',
-          success: (data) => {
-            geoData = data
-            var 要找的鱼 = 'Rainbow'
-            var checkItems = data.features[0].properties
-            var innerHTML = ''
-            var number = 0
-            var markerObj = {}
+      function handleLocationError (browserHasGeolocation, infoWindow, pos) {
+        infoWindow.setPosition(pos);
+        infoWindow.setContent(browserHasGeolocation ?
+          'Error: The Geolocation service failed.' :
+          'Error: Your browser doesn\'t support Geolocation.');
+      }
 
-            // 插入<li>列表
-            for (var i in checkItems) {
-              number++
-              innerHTML +=
-                `<li>
+      $.ajax({
+        url: './data/LakesEditedv2.json',
+        success: (data) => {
+          geoData = data
+          var 要找的鱼 = 'Rainbow'
+          var checkItems = data.features[0].properties
+          var innerHTML = ''
+          var number = 0
+          var markerObj = {}
+          var checkboxName = 'Rainbow'
+          var choicedSpan = []
+
+          // 插入<li>列表
+          for (var i in checkItems) {
+            if (i === 'Latitude' || i === 'WtrName' || i === 'Longitude' || i === 'AreaAcres' || i === 'County' || i === 'Spec_Reg_1' || i === 'Spec_Reg_2' || i === 'Reg_Type' || i === 'Reg_Link_1' || i === 'Reg_Link_2') {
+              continue;
+            }
+
+            switch (i) {
+              case 'Chain_Pick':
+                checkboxName = 'Chain Pickerel'
+                break
+              case 'Northern_P':
+                checkboxName = 'Northern Pike'
+                break
+              default:
+                checkboxName = _.startCase(i)
+            }
+
+            number++
+            innerHTML +=
+              `<li data-name="${i}">
                   <input type="checkbox" id="choice${number}">
-                  <label for="choice${number}">${i}</label>
+                  <label for="choice${number}">${checkboxName}</label>
                 </li>`
+          }
+
+          $('#checkbox').append(innerHTML)
+          $('#checkbox li').off('click').on('click', function (e) {
+            var fish = $.trim($(this).attr('data-name'))
+            $(this).children('input')[0].checked = !$(this).children('input')[0].checked    // 点击的时候若checked了则变为unchecked unchecked变为checked
+
+            if ($(this).children('input')[0].checked) {       // 如果选中
+              找交集鱼(fish)
+              addSpan(fish)
+            } else {
+              隐藏鱼(fish)
+              subSpan(fish)
             }
 
-            $('#checkbox').append(innerHTML)
-            $('#checkbox li').off('click').on('click', function (e) {
-              var fish = $.trim($(this).text())
-              $(this).children('input')[0].checked = !$(this).children('input')[0].checked    // 使checkbox为checked
+            return false      // 避免事件捕获所造成的执行两次
+          })
 
-              if ($(this).children('input')[0].checked) {       // 如果选中
-                找鱼(fish)
-              } else {
-                隐藏鱼(fish)
-              }
+          var 需要处理的鱼组 = {}
+          var 交集的地点 = []
+          var 交集暂存鱼组 = []
+          var markerList = []             // 实例化地标数组
 
-              return false      // 避免事件捕获所造成的执行两次
-            })
+          function 找交集鱼 (要找的鱼) {
+            var coordinateList = []         // 坐标列表
 
-            /*
-             * 展示所有marker标记
-             */
-            function showAllMarker () {
-              for (var i = 0; i < data.features.length; i++) {
-                var coords = []
-                coords = data.features[i].geometry.coordinates
+            for (var i = 0; i < data.features.length; i++) {
+              var coords = []
+              var str = data.features[i].properties[要找的鱼]
+              let hasFishStr = str ? str : ''
 
-                var location = new google.maps.LatLng(coords[1], coords[0])
-                addMarker(location)
-              }
-            }
-
-            /*
-             * 操作标记
-             * https://developers.google.com/maps/documentation/javascript/examples/marker-remove?hl=zh-cn
-             */
-            function addMarker (location) {
-              var marker = new google.maps.Marker({
-                position: location,
-                map: map
-              })
-            }
-
-            function 找鱼 (要找的鱼) {
-              var markerList = []
-              for (var i = 0; i < data.features.length; i++) {
-                var coords = []
-                let hasFishStr = data.features[i].properties[要找的鱼] ? data.features[i].properties[要找的鱼] : ''
-
-                if (hasFishStr.indexOf('Yes') === 0) {
-                  coords = data.features[i].geometry.coordinates
-
-                  var latLng = new google.maps.LatLng(coords[1], coords[0])
-                  var marker = new google.maps.Marker({
-                    position: latLng,
-                    map: map
-                  })
-                  markerList.push(marker)
+              if (hasFishStr.indexOf('Yes') === 0) {
+                if (hasFishStr.length > 3) {
+                  var introduction = hasFishStr.slice(8)                           // 取出介绍文字
+                  coords = data.features[i].geometry.coordinates                  // 找到坐标
+                  coordinateList.push({content: introduction, coords: coords})
                 } else {
-                  coords = []
+                  coords = data.features[i].geometry.coordinates                  // 找到坐标
+                  coordinateList.push({coords: coords})
                 }
+              } else {
+                coords = []
               }
-              markerObj[要找的鱼] = markerList
-              console.log(markerObj)
             }
 
-            function 隐藏鱼 (fish) {
-              for (var i = 0; i < markerObj[fish].length; i++) {
-                console.log(markerObj[fish][i])
-                markerObj[fish][i].setMap(null)
+            需要处理的鱼组[要找的鱼] = coordinateList      // 对象
+            show鱼(需要处理的鱼组)
+          }
+
+          function 隐藏鱼 (fish) {
+            需要处理的鱼组 = _.omit(需要处理的鱼组, fish)
+            show鱼(需要处理的鱼组)
+          }
+
+          function show鱼 (需要处理的鱼组) {
+            // 隐藏地图鱼标记
+            for (var i = 0; i < markerList.length; i++) {
+              markerList[i].setMap(null)
+            }
+
+            var tmpList = []
+            for (let i in 需要处理的鱼组) {
+              // tmpList.push(_.map(需要处理的鱼组[i], 'coords'))
+              tmpList.push(需要处理的鱼组[i])
+            }
+
+            交集的地点 = _.intersectionBy(...tmpList, 'coords')
+
+            // 展示地标
+            for (let i = 0; i < 交集的地点.length; i++) {
+              var latLng = new google.maps.LatLng(交集的地点[i].coords[1], 交集的地点[i].coords[0])
+              var marker = new google.maps.Marker({
+                position: latLng,
+                map: map,
+                title: '111'
+              })
+
+              // 如果有提示
+              if (交集的地点[i].content) {
+                var infowindow = new google.maps.InfoWindow()
+
+                // 闭包 显示提示框
+                const cb = (map, marker, content) => {
+                  // return () => {
+                  infowindow.setContent(content)
+                  infowindow.open(map, marker)
+                  // }
+                }
+                google.maps.event.addListener(marker, 'click', cb(map, marker, 交集的地点[i].content))
+
+                markerList.push(marker)
+              } else {
+                markerList.push(marker)
               }
             }
           }
-        })
-      }
 
-      /*
-       * data 操作 数据操作
-       */
-      // map.data.loadGeoJson()
-      // map.data.addGeoJson(geoData)     // 自动产生marker
-      /*
-       * marker 操作 标记操作
-       * https://developers.google.com/maps/documentation/javascript/examples/marker-remove?hl=zh-cn
-       */
-      // marker.setMap(null);         // 隐藏
-      // markers[i].setMap(map);      // 显示
-      // marker.setMap(null); markers = []; // 消除
-    </script>
-    <script async defer
-            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBGLc9_Sa8DBtcnOagh24sIepOnjmDrLjo&callback=initMap">
-    </script>
+          function subSpan (fish) {
+            choicedSpan.mRemove(fish)
+            showSpan()
+          }
+
+          function addSpan (fish) {
+            choicedSpan.push(fish)
+            showSpan()
+          }
+
+          function showSpan () {
+            $('.choiced-item').html('')
+            var htmlTxt = ''
+            for (var i = 0; i < choicedSpan.length; i++) {
+              htmlTxt += `<span>${choicedSpan[i]}</span>`
+            }
+
+            $('.choiced-item').append(htmlTxt)
+          }
+        }
+      })
+    }
+
+    /*
+     * data 操作 数据操作
+     */
+    // map.data.loadGeoJson()
+    // map.data.addGeoJson(geoData)     // 自动产生marker
+    /*
+     * marker 操作 标记操作
+     * https://developers.google.com/maps/documentation/javascript/examples/marker-remove?hl=zh-cn
+     */
+    // marker.setMap(null);         // 隐藏
+    // markers[i].setMap(map);      // 显示
+    // marker.setMap(null); markers = []; // 消除
+    /*
+     * infowindow 操作
+     *  var infowindow = new google.maps.InfoWindow({ content: 交集的地点[i].content })
+     * infowindow.open(map, marker);
+     * infowindow.close()
+     */
+    Array.prototype.mRemove = function (val) {
+      var index = this.indexOf(val);
+      if (index > -1) {
+        this.splice(index, 1);
+      }
+    };
+</script>
+<script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBGLc9_Sa8DBtcnOagh24sIepOnjmDrLjo&callback=initMap">
+</script>
 
 </body>
 </html>
