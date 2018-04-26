@@ -38,11 +38,24 @@
 
         ul.checkbox li input[type=checkbox] {position: absolute;margin: 0;margin-left: 5px;}
 
+        /*滚动条*/
         ::-webkit-scrollbar-thumb {background-color: rgba(0, 0, 0, 0.2); height: 50px; outline-offset: -2px; outline: 2px solid #fff; -webkit-border-radius: 4px;border: 2px solid #fff;}
 
         ::-webkit-scrollbar { width: 8px; height: 8px; }
 
         ::-webkit-scrollbar-track-piece { background-color: #fff; -webkit-border-radius: 0; }
+
+        /*infowindow*/
+        #info-window-wrapper {font-size: 13px;}
+
+        #info-window-wrapper h1 {font-size: 1.2em; font-weight: bold; margin: 0 0 0.3em 0;}
+
+        #info-window-wrapper p { font-weight: 300; font-size: 13px; line-height: 19px;}
+
+        #info-window-wrapper b { font-size: 13px;}
+
+        #info-window-wrapper a { font-size: 13px;}
+
     </style>
 </head>
 
@@ -163,17 +176,27 @@
 
             for (var i = 0; i < data.features.length; i++) {
               var coords = []
+              var geometry = data.features[i].geometry
+              var properties = data.features[i].properties
+              var Reg_2 = {spec_reg_2: '', reg_link_2: ''}
+              var Reg_1 = {spec_reg_1: '', reg_link_1: ''}
               var str = data.features[i].properties[要找的鱼]
+
               let hasFishStr = str ? str : ''
 
               if (hasFishStr.indexOf('Yes') === 0) {
+                coords = geometry.coordinates                                         // 找到坐标
+                lakeName = properties.WtrName
+                properties.Spec_Reg_1 !== '' ? (Reg_1.spec_reg_1 = properties.Spec_Reg_1) : ''     // reg_1
+                properties.Reg_Link_1 !== '' ? (Reg_1.reg_link_1 = properties.Reg_Link_1) : ''
+                properties.Spec_Reg_2 !== '' ? (Reg_2.spec_reg_2 = properties.Spec_Reg_2) : ''     // reg_2
+                properties.Reg_Link_2 !== '' ? (Reg_2.reg_link_2 = properties.Reg_Link_2) : ''
+
                 if (hasFishStr.length > 3) {
-                  var introduction = hasFishStr.slice(8)                           // 取出介绍文字
-                  coords = data.features[i].geometry.coordinates                  // 找到坐标
-                  coordinateList.push({content: introduction, coords: coords})
+                  var introduction = hasFishStr.slice(8)                                // 取出介绍文字
+                  coordinateList.push({content: introduction, coords: coords, Reg_1: Reg_1, Reg_2: Reg_2, lakeName: lakeName})
                 } else {
-                  coords = data.features[i].geometry.coordinates                  // 找到坐标
-                  coordinateList.push({coords: coords})
+                  coordinateList.push({coords: coords, Reg_1: Reg_1, Reg_2: Reg_2, lakeName: lakeName})
                 }
               } else {
                 coords = []
@@ -197,7 +220,6 @@
 
             var tmpList = []
             for (let i in 需要处理的鱼组) {
-              // tmpList.push(_.map(需要处理的鱼组[i], 'coords'))
               tmpList.push(需要处理的鱼组[i])
             }
 
@@ -208,28 +230,79 @@
               var latLng = new google.maps.LatLng(交集的地点[i].coords[1], 交集的地点[i].coords[0])
               var marker = new google.maps.Marker({
                 position: latLng,
-                map: map,
-                title: '111'
+                map: map
               })
+
+              var item = 交集的地点[i]
+
+              var content = `
+                    <div id="info-window-wrapper">
+                      <div id="siteNotice"></div>
+                      <h1 id="firstHeading" class="firstHeading">${item.lakeName}</h1>
+                      <div id="bodyContent">
+                        <p>
+                          <!--<b>Uluru</b>also referred to as <b>Ayers Rock</b>-->
+                          ${item.Reg_1.spec_reg_1 ? item.Reg_1.spec_reg_1 : ''}
+                        </p>
+                        <p>
+                          Attribution: <b>${item.lakeName ? item.lakeName : ''}<b>
+                          <a href="${item.Reg_1.reg_link_1 ? item.Reg_1.reg_link_1 : ''}" target="_blank">
+                            ${item.Reg_1.reg_link_1 ? item.Reg_1.reg_link_1 : ''}
+                          </a>
+                        </p>
+                    </div>
+                `
+
+              attachSecretMessage(marker, content)
 
               // 如果有提示
               if (交集的地点[i].content) {
-                var infowindow = new google.maps.InfoWindow()
-
-                // 闭包 显示提示框
-                const cb = (map, marker, content) => {
-                  // return () => {
-                  infowindow.setContent(content)
-                  infowindow.open(map, marker)
-                  // }
-                }
-                google.maps.event.addListener(marker, 'click', cb(map, marker, 交集的地点[i].content))
-
+                // var infowindow = new google.maps.InfoWindow()
+                //
+                // // 闭包 显示提示框
+                // const cb = (map, marker, content) => {
+                //   return () => {         // 实现单点
+                //     infowindow.setContent(content)
+                //     infowindow.open(map, marker)
+                //   }
+                // }
+                // var content = `
+                //     <div id="info-window-wrapper">
+                //       <div id="siteNotice"></div>
+                //       <h1 id="firstHeading" class="firstHeading">${item.lakeName}</h1>
+                //       <div id="bodyContent">
+                //         <p>
+                //           <!--<b>Uluru</b>also referred to as <b>Ayers Rock</b>-->
+                //           ${item.Reg_1.spec_reg_1 ? item.Reg_1.spec_reg_1 : ''}
+                //         </p>
+                //         <p>
+                //           Attribution: <b>${item.lakeName ? item.lakeName : ''}<b>
+                //           <a href="${item.Reg_1.reg_link_1 ? item.Reg_1.reg_link_1 : ''}" target="_blank">
+                //             ${item.Reg_1.reg_link_1 ? item.Reg_1.reg_link_1 : ''}
+                //           </a>
+                //         </p>
+                //     </div>
+                // `
+                //
+                // google.maps.event.addListener(marker, 'click', cb(map, marker, content))
+                attachSecretMessage(marker,content)
                 markerList.push(marker)
               } else {
                 markerList.push(marker)
               }
+
             }
+
+            function attachSecretMessage (marker, content) {
+              var infowindow = new google.maps.InfoWindow({
+                content: content
+              })
+
+              marker.addListener('click', function () {
+                infowindow.open(marker.get('map'), marker)
+              })
+            }
+
           }
 
           function subSpan (fish) {
